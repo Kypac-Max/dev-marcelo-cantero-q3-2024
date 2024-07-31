@@ -1,0 +1,70 @@
+{
+	"name": "Header",
+	"type": "header",
+	"sections": {
+		"announcement-bar": {
+			"type": "announcement-bar",
+			"blocks": {
+				"announcement-bar-0": {
+					"type": "announcement",
+					"settings": {
+						"utm_medium": "social",
+						"discount_code": "GIVEMEAJOB",
+						"color_background": "#000000",
+						"color_text": "#ff0000",
+						"text": "Get your 15% off with code",
+						"link": "",
+						"text_alignment": "center"
+					}
+				},
+				"announcement-bar-1": {
+					"type": "announcement",
+					"settings": {
+						"utm_medium": "email",
+						"discount_code": "YOUWILLGETTHEJOB",
+						"color_background": "#000000",
+						"color_text": "#fff900",
+						"text": "Get your 15% off with code",
+						"link": "",
+						"text_alignment": "center"
+					}
+				},
+				"announcement-bar-2": {
+					"type": "announcement",
+					"settings": {
+						"utm_medium": "welcome",
+						"discount_code": "WELCOME",
+						"color_background": "#212121",
+						"color_text": "#4db072",
+						"text": "Get your 100% off with code",
+						"link": "",
+						"text_alignment": "center"
+					}
+				},
+				"announcement-bar-3": {
+					"type": "announcement",
+					"settings": {
+						"utm_medium": "deal10",
+						"discount_code": "DEAL10",
+						"color_background": "#212121",
+						"color_text": "#5f84ee",
+						"text": "Get your 10% off with code",
+						"link": "",
+						"text_alignment": "center"
+					}
+				}
+			},
+			"block_order": [
+				"announcement-bar-0",
+				"announcement-bar-1",
+				"announcement-bar-2",
+				"announcement-bar-3"
+			],
+			"settings": {
+				"color_scheme": "scheme-1",
+				"show_line_separator": true
+			}
+		}
+	},
+	"order": ["announcement-bar"]
+}
