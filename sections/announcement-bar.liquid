@@ -1,0 +1,280 @@
+{% style %}
+  .announcement-container {
+    position: relative;
+
+    & > div {
+      position: absolute;
+      width: 100%;
+    }
+  }
+{% endstyle %}
+<div class="announcement-container">
+  {%- if section.blocks.size == 1 -%}
+    <div
+      class="tw-hidden tw-py-4 tw-items-center {% if section.settings.show_line_separator and section.blocks.size > 0 %}tw-border-b-black {% endif %}"
+      {% if section.blocks.first.settings.utm_medium != 'none' %}
+        data-utm-medium="{{ section.blocks.first.settings.utm_medium }}"
+      {% endif %}
+      {% if section.blocks.first.settings.discount_code != blank %}
+        data-discount-code="{{ section.blocks.first.settings.discount_code }}"
+      {% endif %}
+      style="background-color: {{ section.blocks.first.settings.color_background }}"
+    >
+      <div class="tw-w-[95%]">
+        {%- if section.blocks.first.settings.text != blank -%}
+          {%- if section.blocks.first.settings.link != blank -%}
+            <a
+              href="{{ section.blocks.first.settings.link }}"
+              class="tw-no-underline"
+            >
+          {%- endif -%}
+          <p class="tw-px-4" style="text-align: {{ section.blocks.first.settings.text_alignment }}">
+            <span class="tw-text-3xl" style="color: {{ section.blocks.first.settings.color_text }}">
+              {{ section.blocks.first.settings.text | escape }}
+            </span>
+            <span class="tw-text-4xl" style="color: {{ section.blocks.first.settings.color_text }}">
+              {{ section.blocks.first.discount_code | escape }}
+            </span>
+          </p>
+          {%- if section.blocks.first.settings.link != blank -%}
+            </a>
+          {%- endif -%}
+        {%- endif -%}
+      </div>
+      <div class="icon-close hover:tw-cursor-pointer" style="color: {{ section.blocks.first.settings.color_text }}">
+        {% render 'icon-close', class: 'tw-size-6' %}
+      </div>
+    </div>
+  {%- elsif section.blocks.size > 1 -%}
+    {%- for block in section.blocks -%}
+      <div
+        class="tw-hidden tw-py-4 tw-items-center {% if section.settings.show_line_separator and section.blocks.size > 0 %}tw-border-b-black {% endif %}"
+        {% if block.settings.utm_medium != 'none' %}
+          data-utm-medium="{{ block.settings.utm_medium }}"
+        {% endif %}
+        {% if block.settings.discount_code != blank %}
+          data-discount-code="{{ block.settings.discount_code }}"
+        {% endif %}
+        style="background-color: {{ block.settings.color_background }}"
+        id="{{ section.id }}-{{ forloop.index }}"
+        {{ block.shopify_attributes }}
+        role="group"
+        tabindex="-1"
+      >
+        <div
+          class="tw-w-[95%]"
+          {{ block.shopify_attributes }}
+        >
+          {%- if block.settings.text != blank -%}
+            {%- if block.settings.link != blank -%}
+              <a
+                href="{{ block.settings.link }}"
+                class="tw-no-underline"
+              >
+            {%- endif -%}
+            <p class="tw-px-4 text-wrapper" style="text-align: {{ section.blocks.first.settings.text_alignment }}">
+              <span class="tw-text-3xl" style="color: {{ block.settings.color_text }}">
+                {{ block.settings.text | escape }}
+              </span>
+              <span class="tw-text-4xl" style="color: {{ block.settings.color_text }}">
+                {{ block.settings.discount_code | escape }}
+              </span>
+            </p>
+            {%- if block.settings.link != blank -%}
+              </a>
+            {%- endif -%}
+          {%- endif -%}
+        </div>
+        <div class="icon-close hover:tw-cursor-pointer" style="color: {{ block.settings.color_text }}">
+          {% render 'icon-close', class: 'tw-size-6' %}
+        </div>
+      </div>
+    {%- endfor -%}
+  {%- endif -%}
+</div>
+
+<script>
+  function getParamsFromUrl(url, param) {
+    const params = new URLSearchParams(url);
+    return params.get(param);
+  }
+
+  function getLocalItem(key) {
+    return JSON.parse(localStorage.getItem(key));
+  }
+
+  function setLocalItem(key, data) {
+    localStorage.setItem(key, JSON.stringify(data));
+  }
+
+  function updateLocalAnnouncement(container, announcement, key) {
+    const data = announcement || [];
+    data.push({
+      utmMedium: container.dataset.utmMedium,
+      discountCode: container.dataset.discountCode,
+    });
+    setLocalItem(key, data);
+  }
+
+  function deleteLocalAnnouncement(container, announcement, key) {
+    const data = announcement.filter(
+      (filtered) =>
+        filtered.utmMedium !== container.dataset.utmMedium && filtered.discountCode !== container.dataset.discountCode
+    );
+    setLocalItem(key, data);
+  }
+
+  function checkStatusContainer(container, openedAnnouncement) {
+    const queryString = window.location.search;
+    const discountCodePath = window.location.pathname;
+    const discountCodeUrl = discountCodePath.split('/').pop();
+    const utmMediumUrl = getParamsFromUrl(queryString, 'utm_medium');
+
+    const $firstText = container.querySelector('.text-wrapper span:nth-child(1)');
+    const $secondText = container.querySelector('.text-wrapper span:nth-child(2)');
+
+    const isOpened = openedAnnouncement?.some(
+      (opened) =>
+        container.dataset.utmMedium === opened.utmMedium && container.dataset.discountCode === opened.discountCode
+    );
+
+    if (
+      (container.dataset.discountCode === discountCodeUrl && discountCodePath.includes('discount')) ||
+      container.dataset.utmMedium === utmMediumUrl ||
+      isOpened
+    ) {
+      container.classList.add('tw-flex');
+      container.classList.remove('tw-hidden');
+      if (!isOpened) updateLocalAnnouncement(container, openedAnnouncement, 'openedAnnouncement');
+    }
+    if (isOpened) {
+      const discountPercent = $firstText.textContent.match(/(\d+)/)?.[0] || '';
+      $firstText.innerHTML = `Your ${discountPercent}% off discount code ${container.dataset.discountCode} will auto-apply at checkout.`;
+      $secondText.classList.add('tw-hidden');
+    }
+  }
+
+  function initializeAnnouncements() {
+    const closeIcons = document.querySelectorAll('.icon-close');
+    const filteredContainers = document.querySelectorAll('[data-utm-medium], [data-discount-code]');
+
+    closeIcons.forEach((icon) => {
+      icon.addEventListener('click', () => {
+        const container = icon.closest('[data-utm-medium]');
+        container.classList.add('tw-hidden');
+        const closedAnnouncement = getLocalItem('closedAnnouncement');
+        const openedAnnouncement = getLocalItem('openedAnnouncement');
+        updateLocalAnnouncement(container, closedAnnouncement, 'closedAnnouncement');
+        deleteLocalAnnouncement(container, openedAnnouncement, 'openedAnnouncement');
+      });
+    });
+
+    filteredContainers.forEach((container) => {
+      const closedAnnouncement = getLocalItem('closedAnnouncement');
+      const openedAnnouncement = getLocalItem('openedAnnouncement');
+      const isClosed = closedAnnouncement?.some(
+        (closed) =>
+          container.dataset.utmMedium === closed.utmMedium && container.dataset.discountCode === closed.discountCode
+      );
+
+      if (!isClosed) {
+        checkStatusContainer(container, openedAnnouncement);
+      }
+
+      openedAnnouncement?.forEach((opened, index) => {
+        if (
+          container.dataset.utmMedium === opened.utmMedium &&
+          container.dataset.discountCode === opened.discountCode
+        ) {
+          container.style.zIndex = `${index + 1}`;
+        }
+      });
+    });
+  }
+
+  document.addEventListener('DOMContentLoaded', initializeAnnouncements);
+</script>
+
+{% schema %}
+{
+  "name": "Announcement bar",
+  "max_blocks": 12,
+  "enabled_on": {
+    "groups": ["header"]
+  },
+  "settings": [],
+  "blocks": [
+    {
+      "type": "announcement",
+      "name": "Announcement",
+      "settings": [
+        {
+          "type": "text",
+          "id": "utm_medium",
+          "default": "social",
+          "label": "UTM medium value to match the URL"
+        },
+        {
+          "type": "text",
+          "id": "discount_code",
+          "default": "GIVEMEAJOB",
+          "label": "Discount code"
+        },
+        {
+          "type": "color_background",
+          "id": "color_background",
+          "label": "Select color background",
+          "default": "#000000"
+        },
+        {
+          "type": "color",
+          "id": "color_text",
+          "label": "Select color text",
+          "default": "#000000"
+        },
+        {
+          "type": "text",
+          "id": "text",
+          "default": "Welcome to our store",
+          "label": "Text"
+        },
+        {
+          "type": "url",
+          "id": "link",
+          "label": "Link"
+        },
+        {
+          "type": "select",
+          "id": "text_alignment",
+          "options": [
+            {
+              "value": "left",
+              "label": "Left"
+            },
+            {
+              "value": "center",
+              "label": "Center"
+            },
+            {
+              "value": "right",
+              "label": "Right"
+            }
+          ],
+          "default": "center",
+          "label": "Desktop content alignment"
+        }
+      ]
+    }
+  ],
+  "presets": [
+    {
+      "name": "t:sections.announcement-bar.presets.name",
+      "blocks": [
+        {
+          "type": "announcement"
+        }
+      ]
+    }
+  ]
+}
+{% endschema %}
