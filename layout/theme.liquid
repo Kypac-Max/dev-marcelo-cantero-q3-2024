@@ -19,7 +19,9 @@
     {{ content_for_header }}
   </head>
 
-  <body class="grid min-h-full grid-cols-[100%] grid-rows-[1fr]">
+  <body class="tw-grid tw-min-h-full tw-grid-cols-[100%] tw-grid-rows-[1fr] tw-gap-y-40">
+    {% sections 'header-group' %}
+
     <main>
       {{ content_for_layout }}
     </main>
