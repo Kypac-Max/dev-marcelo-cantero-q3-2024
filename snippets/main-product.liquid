@@ -1,0 +1,76 @@
+<div class="md:tw-justify-center md:tw-flex md:tw-items-center">
+  <div class="image">
+    {{
+      product.featured_media.preview_image
+      | image_url: width: 416
+      | image_tag: loading: 'lazy', widths: '54, 74, 104, 162, 208, 324, 416', alt: product.featured_media.alt
+      | escape
+    -}}
+  </div>
+  <div class="info tw-px-4">
+    <a href="{{ product.url }}" class="tw-no-underline tw-text-2xl hover:tw-underline">
+      <h1 class="tw-my-8">
+        {{ product.title | escape }}
+      </h1>
+    </a>
+    <span class="tw-my-8">{{ product.price | money_with_currency }}</span>
+    {% if product.description != blank %}
+      <div class="tw-my-8">
+        {{ product.description }}
+      </div>
+    {% endif %}
+    {%- form 'product',
+      product,
+      id: product.id,
+      class: 'form tw-my-8',
+      novalidate: 'novalidate',
+      data-type: 'add-to-cart-form'
+    -%}
+      <input
+        type="hidden"
+        name="id"
+        value="{{ product.selected_or_first_available_variant.id }}"
+        {% if product.selected_or_first_available_variant.available == false
+          or product.selected_or_first_available_variant == null
+        %}
+          disabled
+        {% endif %}
+        class="product-variant-id"
+      >
+
+      <div class="product-form__buttons">
+        {%- liquid
+          assign check_against_inventory = true
+          if product.selected_or_first_available_variant.inventory_management != 'shopify' or product.selected_or_first_available_variant.inventory_policy == 'continue'
+            assign check_against_inventory = false
+          endif
+          if product.selected_or_first_available_variant.quantity_rule.min > product.selected_or_first_available_variant.inventory_quantity and check_against_inventory
+            assign quantity_rule_soldout = true
+          endif
+        -%}
+        <button
+          id="ProductSubmitButton-{{ product.id }}"
+          type="submit"
+          name="add"
+          class="tw-p-4 tw-text-tbgYellow tw-rounded-3xl tw-bg-tbgOrange hover:tw-text-tbgOrange hover:tw-bg-tbgYellow"
+          {% if product.selected_or_first_available_variant.available == false
+            or quantity_rule_soldout
+            or product.selected_or_first_available_variant == null
+          %}
+            disabled
+          {% endif %}
+        >
+          <span>
+            {%- if product.selected_or_first_available_variant == null -%}
+              Unavailable
+            {%- elsif product.selected_or_first_available_variant.available == false or quantity_rule_soldout -%}
+              Sold out
+            {%- else -%}
+              Add to cart
+            {%- endif -%}
+          </span>
+        </button>
+      </div>
+    {% endform %}
+  </div>
+</div>
